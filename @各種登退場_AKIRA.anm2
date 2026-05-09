@@ -111,8 +111,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -232,8 +232,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -358,8 +358,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -478,8 +478,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -598,8 +598,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -724,8 +724,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -856,8 +856,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -976,8 +976,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -1102,8 +1102,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- 合成モード,形状,の変数を文字列へ変換
@@ -1262,8 +1262,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- 合成モード,形状,の変数を文字列へ変換
@@ -1421,8 +1421,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- 形状選択
@@ -1566,8 +1566,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -1684,8 +1684,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -1803,8 +1803,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- 形状選択
@@ -1935,8 +1935,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -2056,8 +2056,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -2175,8 +2175,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
@@ -2293,8 +2293,8 @@ end
 -------------------------- フェード
 local in_fade_speed = 0
 local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time end
+if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
+if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
 obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
 
 -------------------------- エフェクト適用
