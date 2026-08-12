@@ -4,7 +4,6 @@
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_strength:強さ,-4000,4000,500
 --track@glow_diffusion:拡散,0,4000,250
 --track@glow_threshold:しきい値,0,100,80
@@ -12,108 +11,42 @@
 --check@glow_fix_size:サイズ固定,0
 --color@glow_color:光色,0xffffff
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_strength = (ease_t + out_ease_t) * (entry_strength or 100)
@@ -126,115 +59,48 @@ obj.effect("発光","強さ",c_strength,"拡散",glow_diffusion,"しきい値",g
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_clip_u:上,-4000,4000,0
 --track@entry_clip_d:下,-4000,4000,0
 --track@entry_clip_l:左,-4000,4000,0
 --track@entry_clip_r:右,-4000,4000,0
 --check@clip_center:中心の位置を固定,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_u = (ease_t + out_ease_t) * (entry_clip_u or 0)
@@ -249,7 +115,6 @@ obj.effect("クリッピング", "上", c_u, "下", c_d, "左", c_l, "右", c_r,
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_height:高さ,-4000,4000,15
 --track@ripple_cx:中心X,-4000,4000,0
 --track@ripple_cy:中心Y,-4000,4000,0
@@ -259,108 +124,42 @@ obj.effect("クリッピング", "上", c_u, "下", c_d, "左", c_l, "右", c_r,
 --track@ripple_interval:波紋間隔,-4000,4000,0
 --track@ripple_amp:増幅減衰回数,-100,100,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_h = (ease_t + out_ease_t) * (entry_height or 15)
@@ -372,115 +171,48 @@ obj.effect("波紋", "中心X", ripple_cx, "中心Y", ripple_cy, "幅", ripple_w
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_height:高さ,-4000,4000,100
 --track@raster_w:横幅,0,4000,100
 --track@raster_period:周期,0.01,100,1,0.01
 --check@raster_v:縦ラスター,0
 --check@raster_rand:ランダム振幅,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_h = (ease_t + out_ease_t) * (entry_height or 100)
@@ -492,115 +224,48 @@ obj.effect("ラスター", "横幅", raster_w, "高さ", c_h, "周期", raster_p
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_hc:横回数,-100,100,2,0.01
 --track@entry_vc:縦回数,-100,100,2,0.01
 --track@entry_ox:オフセットX,-4000,4000,0
 --track@entry_oy:オフセットY,-4000,4000,0
 --check@loop_indiv:個別オブジェクト,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local diff_hc = (entry_hc or 2) - 1
@@ -619,114 +284,47 @@ obj.effect("画像ループ", "横回数", c_hc, "縦回数", c_vc, "オフセ�
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_width:ずれ幅,-4000,4000,7
 --track@shift_angle:角度,-3600,3600,90
 --track@shift_strength:強さ,-4000,4000,100
 --select@type:色ずれの種類=1,赤緑A=0,赤青A=1,緑青A=2,赤緑B=3,赤青B=4,緑青B=5
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 
@@ -749,7 +347,6 @@ obj.effect("色ずれ", "ずれ幅", c_w, "角度", shift_angle, "強さ", shift
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_vib_x:X,-4000,4000,10
 --track@entry_vib_y:Y,-4000,4000,10
 --track@entry_vib_z:Z,-4000,4000,0
@@ -757,108 +354,42 @@ obj.effect("色ずれ", "ずれ幅", c_w, "角度", shift_angle, "強さ", shift
 --check@vib_rand:ランダムに強さを変える,1
 --check@vib_complex:複雑に振動,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_x = (ease_t + out_ease_t) * (entry_vib_x or 10)
@@ -872,113 +403,46 @@ obj.effect("振動", "X", c_x, "Y", c_y, "Z", c_z, "周期", vib_period, "ラン
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_amp:振幅,-4000,4000,5
 --track@entry_angle:角度,-3600,3600,10
 --track@tremble_interval:間隔,0,100,0,1
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_amp = (ease_t + out_ease_t) * (entry_amp or 5)
@@ -991,7 +455,6 @@ obj.effect("震える", "振幅", c_amp, "角度", c_ang, "間隔", tremble_inte
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_str:強さ,0,4000,100
 --track@kirari_ex:開始X(%),-500,500,-100
 --track@kirari_sx:終了X(%),-500,500,100
@@ -1003,108 +466,42 @@ obj.effect("震える", "振幅", c_amp, "角度", c_ang, "間隔", tremble_inte
 --color@kirari_col:キラリ色,0xffffff
 --check@kirari_rel:サイズ依存割合,1
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- 合成モード,形状,の変数を文字列へ変換
 
@@ -1151,7 +548,6 @@ obj.effect("グラデーション","強さ",st,"中心X",c_x,"中心Y",c_y,"角�
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_str:強さ,0,4000,100
 --track@kirari_sx:開始X(%),-4000,4000,200
 --track@kirari_ex:終了X(%),-4000,4000,-200
@@ -1163,108 +559,42 @@ obj.effect("グラデーション","強さ",st,"中心X",c_x,"中心Y",c_y,"角�
 --color@kirari_col:キラリ色,0xffffff
 --check@kirari_rel:サイズ依存割合,1
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- 合成モード,形状,の変数を文字列へ変換
 
@@ -1311,7 +641,6 @@ obj.effect("グラデーション","強さ",st,"中心X",c_x,"中心Y",c_y,"角�
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_strength:強さ,-4000,4000,50
 --track@glow2_diffusion:拡散,0,400,50
 --track@glow2_angle:角度,-3600,3600,25
@@ -1322,108 +651,42 @@ obj.effect("グラデーション","強さ",st,"中心X",c_x,"中心Y",c_y,"角�
 --check@disable:光色を無効,0
 --select@shpae_glow2:形状=0,通常=0,クロス(4本)=1,クロス(6本)=2,クロス(8本)=3,クロス(10本)=4,クロス(12本)=5,ライン=6
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- 形状選択
 
@@ -1461,114 +724,47 @@ end
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_range:範囲,-4000,4000,50
 --track@rblur_x:中心X,-4000,4000,0
 --track@rblur_y:中心Y,-4000,4000,0
 --check@rblur_fix:サイズ固定,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_range = (ease_t + out_ease_t) * (entry_range or 50)
@@ -1580,113 +776,46 @@ obj.effect("放射ブラー","範囲",c_range,"X",rblur_x,"Y",rblur_y,"サイズ
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_range:範囲,-4000,4000,50
 --track@dblur_ang:角度,-3600,3600,0
 --check@dblur_fix:サイズ固定,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_range = (ease_t + out_ease_t) * (entry_range or 50)
@@ -1698,114 +827,47 @@ obj.effect("方向ブラー","範囲",c_range,"角度",dblur_ang,"サイズ固�
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_range:範囲,-4000,4000,50
 --track@lblur_str:光の強さ,0,4000,0
 --select@blur_type:形状=1,背景=0,円=1,四角形=2,三角形=3,五角形=4,六角形=5,星型=6,ハート=7
 --check@lblur_fix:サイズ固定,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- 形状選択
 
@@ -1832,112 +894,45 @@ obj.effect("レンズブラー","範囲",c_range,"光の強さ",lblur_str,"形�
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_size:サイズ,1,4000,12
 --check@mosaic_tile:タイル風,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_size = 1 + (ease_t + out_ease_t) * ((entry_size or 12) - 1)
@@ -1949,7 +944,6 @@ obj.effect("モザイク","サイズ",c_size,"タイル風",mosaic_tile)
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_fan_x:中心X,-4000,4000,0
 --track@entry_fan_y:中心Y,-4000,4000,0
 --track@entry_fan_ang:基準角,-3600,3600,0
@@ -1957,108 +951,42 @@ obj.effect("モザイク","サイズ",c_size,"タイル風",mosaic_tile)
 --track@entry_blur:ぼかし,0,4000,1
 --check@fan_center:基準角を中央にする,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_range = (ease_t + out_ease_t) * (entry_range or 360)
@@ -2070,114 +998,47 @@ obj.effect("扇クリッピング","中心X",entry_fan_x or 0,"中心Y",entry_fa
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_range:範囲,0,4000,0
 --track@entry_blur_ratio:縦横比,-100,100,0
 --track@entry_blur_str:光の強さ,0,100,0
 --check@blur_fix:サイズ固定,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_range = (ease_t + out_ease_t) * (entry_range or 50)
@@ -2189,113 +1050,46 @@ obj.effect("ぼかし","範囲",c_range,"縦横比",entry_blur_ratio or 0,"光�
 --track@entry_time:登退場秒数,0,5,0.3,0.01
 --track@in_time:登場秒数,0,5,0,0.01
 --track@out_time:退場秒数,0,5,0,0.01
---track@entry_delay:間隔,0,5,0.1,0.01
 --track@entry_range:範囲,0,4000,0
 --track@entry_blur_ratio:縦横比,-100,100,0
 --check@blur_alpha:透明度の境界をぼかす,0
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
---check@entry_in_fade:INフェード,0
---check@entry_out_fade:OUTフェード,0
+
+--group:登退場,true
 --check@entry_in:登場,1
 --check@entry_out:退場,0
+--group
 
------------------------------------- イージング処理の計算
-local Easing = {}
-function Easing.linear(t) return t end
-function Easing.inSine(t) return 1 - math.cos(t * (math.pi / 2)) end
-function Easing.inQuad(t) return t * t end
-function Easing.inCubic(t) return t * t * t end
-function Easing.inQuart(t) return t * t * t * t end
-function Easing.inQuint(t) return t * t * t * t * t end
-function Easing.inCirc(t) return 1 - math.sqrt(1 - t * t) end
-function Easing.inExpo(t) return (t == 0) and 0 or 2^(10 * (t - 1)) end
-function Easing.inBack(t) local s = 1.70158 return t * t * ((s + 1) * t - s) end
-function Easing.inElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 local f = t - 1 return -(2^(10 * f) * math.sin((f - s) * (2 * math.pi) / p)) end
-function Easing.inBounce(t) return 1 - Easing.outBounce(1 - t) end
-function Easing.outSine(t) return math.sin(t * (math.pi / 2)) end
-function Easing.outQuad(t) return t * (2 - t) end
-function Easing.outCubic(t) local f = t - 1 return f * f * f + 1 end
-function Easing.outQuart(t) local f = t - 1 return 1 - (f * f * f * f) end
-function Easing.outQuint(t) local f = t - 1 return f * f * f * f * f + 1 end
-function Easing.outCirc(t) return math.sqrt(1 - (t - 1)^2) end
-function Easing.outExpo(t) return (t == 1) and 1 or 1 - 2^(-10 * t) end
-function Easing.outBack(t) local s = 1.70158 local f = t - 1 return f * f * ((s + 1) * f + s) + 1 end
-function Easing.outElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 local s = p / 4 return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1 end
-function Easing.outBounce(t) if t < (1 / 2.75) then return 7.5625 * t * t elseif t < (2 / 2.75) then t = t - (1.5 / 2.75) return 7.5625 * t * t + 0.75 elseif t < (2.5 / 2.75) then t = t - (2.25 / 2.75) return 7.5625 * t * t + 0.9375 else t = t - (2.625 / 2.75) return 7.5625 * t * t + 0.984375 end end
-function Easing.inOutSine(t) return 0.5 * (1 - math.cos(math.pi * t)) end
-function Easing.inOutQuad(t) t = t * 2 if t < 1 then return 0.5 * t * t else t = t - 1 return -0.5 * (t * (t - 2) - 1) end end
-function Easing.inOutCubic(t) t = t * 2 if t < 1 then return 0.5 * t * t * t else t = t - 2 return 0.5 * (t * t * t + 2) end end
-function Easing.inOutQuart(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t else t = t - 2 return -0.5 * (t * t * t * t - 2) end end
-function Easing.inOutQuint(t) t = t * 2 if t < 1 then return 0.5 * t * t * t * t * t else t = t - 2 return 0.5 * (t * t * t * t * t + 2) end end
-function Easing.inOutCirc(t) t = t * 2 if t < 1 then return -0.5 * (math.sqrt(1 - t * t) - 1) else t = t - 2 return 0.5 * (math.sqrt(1 - t * t) + 1) end end
-function Easing.inOutExpo(t) if t == 0 or t == 1 then return t end t = t * 2 if t < 1 then return 0.5 * 2^(10 * (t - 1)) else return 0.5 * (-(2^(-10 * (t - 1))) + 2) end end
-function Easing.inOutBack(t) local s = 1.70158 * 1.525 t = t * 2 if t < 1 then return 0.5 * (t * t * ((s + 1) * t - s)) else t = t - 2 return 0.5 * (t * t * ((s + 1) * t + s) + 2) end end
-function Easing.inOutElastic(t) if t == 0 or t == 1 then return t end local p = 0.3 * 1.5 local s = p / 4 t = t * 2 - 1 if t < 0 then return -0.5 * (2^(10 * t) * math.sin((t - s) * (2 * math.pi) / p)) else return 2^(-10 * t) * math.sin((t - s) * (2 * math.pi) / p) * 0.5 + 1 end end
-function Easing.inOutBounce(t) if t < 0.5 then return Easing.inBounce(t * 2) * 0.5 else return Easing.outBounce(t * 2 - 1) * 0.5 + 0.5 end end
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
 
-local mode_map = {[0]="linear",[1]="inSine",[2]="inQuad",[3]="inCubic",[4]="inQuart",[5]="inQuint",[6]="inCirc",[7]="inExpo",[8]="inBack",[9]="inElastic",[10]="inBounce",[11]="outSine",[12]="outQuad",[13]="outCubic",[14]="outQuart",[15]="outQuint",[16]="outCirc",[17]="outExpo",[18]="outBack",[19]="outElastic",[20]="outBounce",[21]="inOutSine",[22]="inOutQuad",[23]="inOutCubic",[24]="inOutQuart",[25]="inOutQuint",[26]="inOutCirc",[27]="inOutExpo",[28]="inOutBack",[29]="inOutElastic",[30]="inOutBounce"}
+local Helper = require("entry_helper")
 
--------------------------- 登場順
-local order
-if entry_order < 1 then order = obj.index
-elseif entry_order < 2 then order = obj.num - 1 - obj.index
-elseif entry_order < 3 then local center = (obj.num - 1) / 2 order = math.abs(center - obj.index)
-elseif entry_order < 4 then
-    local idx = {}
-    for i = 0, obj.num - 1 do idx[i + 1] = i end
-    local seed = obj.id
-    for i = 1, obj.num do
-        local dest = obj.rand(0, obj.num - 1, seed, i)
-        local target = dest + 1
-        idx[i], idx[target] = idx[target], idx[i]
-    end
-    order = idx[obj.index + 1]
-else
-    local center = (obj.num - 1) / 2
-    order = center - math.abs(center - obj.index)
-end
+-- トラックバー等からのパラメータをテーブルに集約
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
 
--------------------------- トラック＆イージング適用
-local ease_t = 0
-local out_ease_t = 0
-local delay = entry_delay or 0.3
-local in_len = (entry_time or 0.3) + (in_time or 0)
-local out_len = (entry_time or 0.3) + (out_time or 0)
-local mode = mode_map[entry_easing] or "linear"
-
-if entry_in ~= 0 then
-    local my_delay_time = (order or 0) * delay
-    if in_len > 0 then
-        local progress = (in_len - (obj.time - my_delay_time)) / in_len
-        if progress < 0 then progress = 0 end
-        if progress > 1 then progress = 1 end
-        ease_t = Easing[mode](progress)
-    else
-        ease_t = (obj.time - my_delay_time >= 0) and 0 or 1
-    end
-end
-
-if entry_out ~= 0 then
-    local out_delay = entry_delay or 0.3
-    local my_out_delay_time = (order or 0) * out_delay
-    local out_start_trigger = obj.totaltime - out_len - my_out_delay_time
-    if out_len > 0 then
-        local out_progress = (obj.time - out_start_trigger) / out_len
-        if out_progress < 0 then out_progress = 0 end
-        if out_progress > 1 then out_progress = 1 end
-        out_ease_t = Easing[mode](out_progress)
-    else
-        out_ease_t = (obj.time >= out_start_trigger) and 1 or 0
-    end
-end
-
--------------------------- フェード
-local in_fade_speed = 0
-local out_fade_speed = 0
-if entry_in_fade ~= 0 then in_fade_speed = entry_time + in_time end
-if entry_out_fade ~= 0 then out_fade_speed = entry_time + out_time end
-obj.effect("フェード","イン",in_fade_speed,"アウト",out_fade_speed)
+-- 共通処理の呼び出し
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
 
 -------------------------- エフェクト適用
 local c_range = (ease_t + out_ease_t) * (entry_range or 100)
