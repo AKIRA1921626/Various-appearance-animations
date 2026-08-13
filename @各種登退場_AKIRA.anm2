@@ -1094,3 +1094,368 @@ Helper.apply_fade(params)
 -------------------------- エフェクト適用
 local c_range = (ease_t + out_ease_t) * (entry_range or 100)
 obj.effect("境界ぼかし","範囲",c_range,"縦横比",entry_blur_ratio or 0,"透明度の境界をぼかす",blur_alpha or 0)
+
+@帯クリッピング登退場_AKIRA
+--label:切り替え効果
+--information:図形（帯）が展開・収縮してテキストが出現・消退するスクリプトです。
+--track@entry_time:登退場秒数,0,5,0.3,0.01
+--track@in_time:登場秒数,0,5,0,0.01
+--track@out_time:退場秒数,0,5,0,0.01
+--select@band_dir:展開方向=0,左から=0,右から=1
+--color@band_color:帯の色,0xffffff
+--select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
+--select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激に加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
+
+--group:登退場,true
+--check@entry_in:登場,1
+--check@entry_out:退場,0
+--group
+
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
+
+local Helper = require("entry_helper")
+local Akira_h = require("AKIRA_aviutl2_helper")
+
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
+
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
+
+--------------------------------
+
+local w, h = obj.w, obj.h
+local r_w,r_h = 0,0
+local is_multi = obj.getoption("multi_object")
+if is_multi then
+    r_w,r_h = Akira_h.characters_size_for_resizing_the_shape()
+else
+    r_w,r_h = Akira_h.get_text_size()
+end
+local col = tonumber(band_color) or 0xffffff
+
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+-- cacheになる前に、元オブジェクトの各種数値を保存
+local ox,oy,oz = obj.ox,obj.oy,obj.oz
+local rx,ry,rz = obj.rx,obj.ry,obj.rz
+local cx,cy,cz = obj.cx,obj.cy,obj.cz
+local sx,sy,sz = obj.sx,obj.sy,obj.sz
+local al = obj.alpha
+local sc = (sx+sy+sz)/3
+
+-- 元画像保持
+obj.copybuffer("cache:orig", "object")
+
+local function draw_band(p, reverse)
+    local clip_l, clip_r
+
+    if band_dir == 0 then
+        clip_l = 0
+        clip_r = w * (1 - p)
+    else
+        clip_l = w * (1 - p)
+        clip_r = 0
+    end
+
+    if reverse then
+        clip_l, clip_r = clip_r, clip_l
+    end
+
+    obj.load("figure", "四角形", col, h)
+    obj.effect("リサイズ","拡大率",100.000,"X",r_w,"Y",r_h,"補間なし",0,"ピクセル数でサイズ指定",0)
+    obj.effect("クリッピング", "左", clip_l, "右", clip_r, "中心の位置を変更", 0)
+    local dr_s = w * (1 - p)
+    local dr_e = w * (p - 1)
+    if entry_in == 1 and entry_out == 1 then
+        dr_s = w * (1 - p)
+        dr_e = w * (p - 1)
+        obj.draw(dr_s)
+        obj.draw(dr_s)
+    elseif entry_in == 1 then
+        dr_s = w * (1 - p)
+        obj.draw(dr_s)
+    elseif entry_out == 1 then
+        dr_e = w * (p - 1)
+        obj.draw(dr_e)
+    end
+end
+
+local function draw_text()
+    obj.copybuffer("object","cache:orig")
+    obj.draw()
+end
+
+--------------------------------
+
+if entry_in == 1 and ease_t > 0 then
+    local p = ease_t
+
+    -- 帯
+    draw_band(p, false)
+    -- テキスト（解除と同時）
+    draw_text()
+
+elseif entry_out == 1 and out_ease_t > 0 then
+    local p = 1 - out_ease_t
+
+    draw_band(p, true)
+    draw_text()
+
+else
+    obj.draw()
+end
+
+obj.setoption("drawtarget","framebuffer")
+obj.load("tempbuffer")
+
+-- 再度オブジェクトに値を挿入
+obj.ox,obj.oy,obj.oz = ox,oy,oz
+obj.rx,obj.ry,obj.rz = rx,ry,rz
+obj.cx,obj.cy,obj.cz = cx,cy,cz
+obj.sx,obj.sy,obj.sz = sx,sy,sz
+obj.alpha = al
+
+@残像登退場_AKIRA
+--label:切り替え効果
+--information:本体の前後に拡大・透明化する残像を表示して登退場を行うスクリプトです。
+--track@entry_time:登退場秒数,0,5,1,0.01
+--track@in_time:登場秒数,0,5,0,0.01
+--track@out_time:退場秒数,0,5,0,0.01
+--track@afterimage_time:残像時間,0,2,0.3,0.01
+--track@afterimage_alpha:残像透明度,0,100,100
+--check@fixed_transparency:透明度固定,0
+--track@afterimage_scale:残像拡大率,100,500,250
+--track@pos_x:残像位置X,-10000,10000,0,1
+--track@pos_y:残像位置Y,-10000,10000,0,1
+--check@reverse:反転,0
+--select@afterimage_layer:前後関係=0,前面=0,後面=1
+--select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
+--select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:標準的な減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い加速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激に加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
+
+--group:登退場,true
+--check@entry_in:登場,1
+--check@entry_out:退場,0
+--group
+
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
+
+local Helper = require("entry_helper")
+
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
+
+local ease_t, out_ease_t = Helper.calc_ease(params)
+
+--------------------------------
+
+-- cacheになる前に、元オブジェクトの各種数値を保存
+local ox,oy,oz = obj.ox,obj.oy,obj.oz
+local rx,ry,rz = obj.rx,obj.ry,obj.rz
+local cx,cy,cz = obj.cx,obj.cy,obj.cz -- 使わなかったが一応そのままにしておく
+local sx,sy,sz = obj.sx,obj.sy,obj.sz
+local al = obj.alpha -- ここの変数名はalphaがわかりやすそうだったが、alphaにすると後に被ってしまうので、適当にalとしておく
+local sc = (sx+sy+sz)/3 -- ここの変数名はscaleがわかりやすそうだったが、scaleにすると後に被ってしまうので、適当にscとしておく
+
+-- 元保持
+obj.copybuffer("cache:orig", "object")
+
+local function draw_main()
+    obj.copybuffer("object" ,"cache:orig")
+    obj.draw(ox,oy,oz,sc,al,rx,ry,rz)
+end
+
+local function draw_afterimage(t)
+    -- 進行度を 0 -> 1 に変換 (t が 1 から 0 へ減少するため)
+    local progress = 1 - t
+
+    -- 100(同サイズ) から afterimage_scale(拡大率) へ拡大
+    local scale = 100 + (afterimage_scale - 100) * progress
+
+    local alpha = 0
+    if fixed_transparency == 0 then
+        -- 時間経過(progress)とともに透明化させる (100% -> 0%)
+        alpha = (afterimage_alpha / 100) * (1 - progress)
+    else
+        alpha = (afterimage_alpha / 100)
+    end
+
+    obj.copybuffer("object", "cache:orig")
+
+    obj.effect("リサイズ", "拡大率", scale)
+    obj.draw(ox + pos_x,oy + pos_y,oz,sc,alpha,rx,ry,rz)
+end
+
+--------------------------------
+
+local w,h = obj.screen_w,obj.screen_h
+
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+local active = ease_t
+if entry_in == 1 and ease_t > 0 then
+    active = ease_t
+elseif entry_out == 1 and out_ease_t > 0 then
+    active = out_ease_t
+end
+
+if active > 0 then
+    if afterimage_layer == 1 then
+        draw_afterimage(active)
+        draw_main()
+    else
+        draw_main()
+        draw_afterimage(active)
+    end
+else
+    draw_main()
+end
+
+obj.setoption("drawtarget","framebuffer")
+
+obj.load("tempbuffer")
+
+Helper.apply_fade(params)
+
+@ステップ移動縮小登退場_AKIRA
+--label:切り替え効果
+--information:縮小しながら左右に瞬間移動して登退場を行うスクリプトです。
+--track@entry_time:登退場秒数,0,5,0.3,0.01
+--track@in_time:登場秒数,0,5,0,0.01
+--track@out_time:退場秒数,0,5,0,0.01
+
+--track@step_scale:拡大率,0,500,150
+--track@step_distx:移動距離X,-2000,2000,600
+--track@step_disty:移動距離Y,-2000,2000,0
+--track@step_interval:移動間隔,0.01,2,0.05,0.01
+--select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
+--track@entry_delay:間隔,0,5,0.1,0.01
+--select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い加速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激に加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
+
+--group:登退場,true
+--check@entry_in:登場,1
+--check@entry_out:退場,0
+--group
+
+--group:フェード,true
+--check@entry_in_fade:INフェード,0
+--track@in_fade_time:インフェード時間,0,5,0.3,0.01
+--check@entry_out_fade:OUTフェード,0
+--track@out_fade_time:アウトフェード時間,0,5,0.3,0.01
+--group
+
+local Helper = require("entry_helper")
+local Akira_h = require("AKIRA_aviutl2_helper")
+
+local params = {
+    entry_order = entry_order,
+    entry_easing = entry_easing,
+    entry_delay = entry_delay,
+    entry_time = entry_time,
+    in_time = in_time,
+    out_time = out_time,
+    entry_in = entry_in,
+    entry_out = entry_out,
+    entry_in_fade = entry_in_fade,
+    in_fade_time = in_fade_time,
+    entry_out_fade = entry_out_fade,
+    out_fade_time = out_fade_time
+}
+
+local ease_t, out_ease_t = Helper.calc_ease(params)
+Helper.apply_fade(params)
+
+--------------------------------
+
+-- cacheになる前に、元オブジェクトの各種数値を保存
+local ox,oy,oz = obj.ox,obj.oy,obj.oz
+local rx,ry,rz = obj.rx,obj.ry,obj.rz
+local cx,cy,cz = obj.cx,obj.cy,obj.cz
+local sx,sy,sz = obj.sx,obj.sy,obj.sz
+local al = obj.alpha
+local sc = (sx+sy+sz)/3
+
+-- 元保持
+obj.copybuffer("cache:orig", "object")
+
+local w,h = obj.screen_w,obj.screen_h
+
+obj.setoption("drawtarget","tempbuffer",w,h)
+
+local is_multi = obj.getoption("multi_object")
+if is_multi then
+    r_w,r_h = Akira_h.characters_size_for_resizing_the_shape()
+else
+    r_w,r_h = Akira_h.get_text_size()
+end
+
+local active = 0
+if entry_in == 1 and ease_t > 0 then
+    active = ease_t
+elseif entry_out == 1 and out_ease_t > 0 then
+    active = out_ease_t
+end
+
+if active > 0 then
+    local scale = 100 + active * step_scale
+
+    local interval = step_interval > 0 and step_interval or 0.05
+    local step = math.floor((obj.time / interval))
+
+    local dir = (step % 2 == 0) and 1 or -1
+    local offsetx = dir * step_distx * active
+    local offsety = dir * step_disty * active
+
+    obj.copybuffer("object","cache:orig")
+    obj.effect("リサイズ", "拡大率", scale)
+    obj.draw(offsetx, offsety)
+else
+    obj.draw()
+end
+
+obj.setoption("drawtarget","framebuffer")
+
+obj.load("tempbuffer")
+
+-- 再度オブジェクトに値を挿入
+obj.ox,obj.oy,obj.oz = ox,oy,oz
+obj.rx,obj.ry,obj.rz = rx,ry,rz
+obj.cx,obj.cy,obj.cz = cx,cy,cz
+obj.sx,obj.sy,obj.sz = sx,sy,sz
+obj.alpha = al
