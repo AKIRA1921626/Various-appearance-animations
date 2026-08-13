@@ -157,14 +157,21 @@ function M.characters_size_for_resizing_the_shape() -- 図形をリサイズす�
     local txt_w, txt_h = 0, 0
     local raw_cx, raw_cy = 0, 0 -- 中心座標 この関数では返していないため、今は不要
 
+    -- 最初の文字の時のみここを実行
+    if (idx - 1) == 0 then
+        -- 個別文字の座標を保存しておくグローバル変数
+        _G.AKIRA_HELPER_CHARS = {}
+    end
+
     -- 文字ごとのサイズ・位置情報を記憶
     _G.AKIRA_HELPER_CHARS[idx] = { ox = obj.ox, oy = obj.oy, w = obj.w, h = obj.h }
 
     local min_x, max_x = 999999, -999999
     local min_y, max_y = 999999, -999999
     local found = false
-    for i = this_s, this_e do
-        local c_info = _G.AKIRA_HELPER_CHARS and _G.ZAKIRA_HELPER_CHARS[i]
+    local last_c = obj.num
+    for i = idx, last_c do
+        local c_info = _G.AKIRA_HELPER_CHARS and _G.AKIRA_HELPER_CHARS[i]
         if c_info then
             local hw = c_info.w / 2
             local hh = c_info.h / 2
