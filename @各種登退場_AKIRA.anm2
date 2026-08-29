@@ -405,7 +405,7 @@ obj.effect("振動", "X", c_x, "Y", c_y, "Z", c_z, "周期", vib_period, "ラン
 --track@out_time:退場秒数,0,5,0,0.01
 --track@entry_amp:振幅,-4000,4000,5
 --track@entry_angle:角度,-3600,3600,10
---track@tremble_interval:間隔,0,100,0,1
+--track@tremble_interval:震え間隔,0,100,0,1
 --select@entry_order:登場順=0,前から=0,後ろから=1,真ん中から=2,ランダム=3,外側から=4
 --track@entry_delay:間隔,0,5,0.1,0.01
 --select@entry_easing:イージングタイプ=3,Linear(等速)=0,inSine(正弦波:緩やかな加速)=1,inQuad(二次:標準的な加速)=2,inCubic(三次:強めの加速)=3,inQuart(四次:かなり強い加速)=4,inQuint(五次:非常に強い加速)=5,inCirc(円弧:最後に急加速)=6,inExpo(指数:急激な加速)=7,inBack(戻り:少し戻って加速)=8,inElastic(弾性:揺れてから加速)=9,inBounce(跳ね返り:跳ねて加速)=10,outSine(正弦波:緩やかに減速)=11,outQuad(二次:標準的な減速)=12,outCubic(三次:強めの減速)=13,outQuart(四次:かなり強い減速)=14,outQuint(五次:非常に強い減速)=15,outCirc(円弧:急激に減速)=16,outExpo(指数:瞬時に減速)=17,outBack(戻り:通り過ぎて戻る)=18,outElastic(弾性:揺れて減速)=19,outBounce(跳ね返り:着地して跳ねる)=20,inOutSine(正弦波:滑らかな加減速)=21,inOutQuad(二次:標準的な加減速)=22,inOutCubic(三次:強めの加減速)=23,inOutQuart(四次:かなり強い加減速)=24,inOutQuint(五次:非常に強い加減速)=25,inOutCirc(円弧:急激な加減速)=26,inOutExpo(指数:中央で急移動)=27,inOutBack(戻り:開始終了で戻る)=28,inOutElastic(弾性:開始終了で揺れる)=29,inOutBounce(跳ね返り:開始終了で跳ねる)=30
