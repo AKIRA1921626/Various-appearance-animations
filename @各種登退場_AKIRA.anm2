@@ -1351,6 +1351,13 @@ obj.setoption("drawtarget","framebuffer")
 
 obj.load("tempbuffer")
 
+-- 元オブジェクトの各種数値を復元
+obj.ox,obj.oy,obj.oz = ox,oy,oz
+obj.cx,obj.cy,obj.cz = cx,cy,cz
+obj.rx,obj.ry,obj.rz = rx,ry,rz
+obj.sx,obj.sy,obj.sz = sx,sy,sz
+obj.alpha = al 
+
 Helper.apply_fade(params)
 
 @ステップ移動縮小登退場_AKIRA
